@@ -49,18 +49,17 @@ jobs:
           -DASAN=OFF \
           -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
           . -B ${{github.workspace}}/build
-                    
-    - uses: ZedThree/clang-tidy-review@v0.10.0
+
+    - uses: ZedThree/clang-tidy-review@v0.13.2
       id: review
       with:
         build_dir: build
         config_file: '.clang-tidy'
-        lgtm_comment_body: ''
         split_workflow: true
 
-    - uses: actions/upload-artifact@v3
-      with:
-        name: clang-tidy-review
-        path: |
-          clang-tidy-review-output.json
-          clang-tidy-review-metadata.json
+    - uses: ZedThree/clang-tidy-review/upload@v0.13.2
+
+      # If there are any comments, fail the check
+    - name: Fail on comments
+      if: steps.review.outputs.total_comments > 0
+      run: exit 1
