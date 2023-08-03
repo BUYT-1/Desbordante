@@ -56,6 +56,11 @@ INITIALIZE_EASYLOGGINGPP
 
 namespace python_bindings {
 
+void clang_tidy_aggro(std::string s) {
+    for (auto c : s) {
+    }
+}
+
 namespace py = pybind11;
 // AR mining algorithms
 using PyApriori = PyArAlgorithm<algos::Apriori>;
