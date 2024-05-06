@@ -16,7 +16,7 @@ indexes::SimilarityMeasureOutput DistanceSimilarityMeasure::MakeIndexes(
         std::shared_ptr<DataInfo const> data_info_left,
         std::shared_ptr<DataInfo const> data_info_right,
         std::vector<indexes::PliCluster> const& clusters_right,
-        util::WorkerThreadPool& thread_pool) const {
+        util::WorkerThreadPool&) const {
     std::vector<model::md::DecisionBoundary> decision_bounds;
     indexes::SimilarityMatrix similarity_matrix;
     indexes::SimilarityIndex similarity_index;
