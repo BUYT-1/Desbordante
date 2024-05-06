@@ -2,6 +2,7 @@
 #include <cstdlib>
 
 #include "algorithms/md/hymd/preprocessing/similarity_measure/distance_similarity_measure.h"
+#include "model/types/date_type.h"
 
 size_t DateDifference(model::Date const& left, model::Date const& right) {
     return std::abs((left - right).days());
