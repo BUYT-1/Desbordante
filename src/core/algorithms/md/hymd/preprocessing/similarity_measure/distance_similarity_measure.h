@@ -21,6 +21,6 @@ public:
         : SimilarityMeasure(std::move(arg_type), std::make_unique<model::DoubleType>()),
           compute_distance_(std::move(compute_distance)),
           min_sim_(min_sim){};
-}
+};
 
 }  // namespace algos::hymd::preprocessing::similarity_measure
