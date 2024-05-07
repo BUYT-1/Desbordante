@@ -6,7 +6,7 @@
 
 namespace algos::hymd::preprocessing::similarity_measure {
 
-class MongeElkanSimilarityMeasure : public ImmediateSimilarityMeasure {
+class JacaardSimilarityMeasure : public ImmediateSimilarityMeasure {
     static constexpr auto kName = "jacaard_similarity";
 
 public:
@@ -22,11 +22,11 @@ public:
         }
 
         std::unique_ptr<SimilarityMeasure> MakeMeasure() const final {
-            return std::make_unique<MongeElkanSimilarityMeasure>(min_sim_);
+            return std::make_unique<JacaardSimilarityMeasure>(min_sim_);
         }
     };
 
-    MongeElkanSimilarityMeasure(model::md::DecisionBoundary min_sim)
+    JacaardSimilarityMeasure(model::md::DecisionBoundary min_sim)
         : ImmediateSimilarityMeasure(
                   std::make_unique<model::StringType>(),
                   [min_sim](std::byte const* l, std::byte const* r) {
