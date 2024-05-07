@@ -26,8 +26,7 @@ using SimInfo = std::map<Similarity, indexes::RecSet>;
 indexes::SimilarityMeasureOutput ImmediateSimilarityMeasure::MakeIndexes(
         std::shared_ptr<DataInfo const> data_info_left,
         std::shared_ptr<DataInfo const> data_info_right,
-        std::vector<indexes::PliCluster> const& clusters_right,
-        util::WorkerThreadPool&) const {
+        std::vector<indexes::PliCluster> const& clusters_right, util::WorkerThreadPool&) const {
     std::vector<model::md::DecisionBoundary> decision_bounds;
     indexes::SimilarityMatrix similarity_matrix;
     indexes::SimilarityIndex similarity_index;
