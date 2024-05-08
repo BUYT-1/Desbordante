@@ -4,7 +4,7 @@
 #include <iterator>
 #include <sstream>
 
-#include "algorithms/md/hymd/preprocessing/similarity_measure/jacaard_similarity_measure.h"
+#include "algorithms/md/hymd/preprocessing/similarity_measure/jaccard_similarity_measure.h"
 
 double MongeElkan(std::string const& word1, std::string const& word2) {
     double cummax = 0.0;
@@ -17,7 +17,7 @@ double MongeElkan(std::string const& word1, std::string const& word2) {
         iss2.seekg(0);
 
         while (std::getline(iss2, token2, ' ')) {
-            maxscore = std::max(maxscore, JacaardMetric(token1.c_str(), token2.c_str()));
+            maxscore = std::max(maxscore, JaccardMetric(token1.c_str(), token2.c_str()));
         }
         cummax += maxscore;
     }

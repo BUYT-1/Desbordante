@@ -4,7 +4,7 @@
 #include <pybind11/stl.h>
 
 #include "algorithms/md/hymd/preprocessing/similarity_measure/date_dif_similarity_measure.h"
-#include "algorithms/md/hymd/preprocessing/similarity_measure/jacaard_similarity_measure.h"
+#include "algorithms/md/hymd/preprocessing/similarity_measure/jaccard_similarity_measure.h"
 #include "algorithms/md/hymd/preprocessing/similarity_measure/lcs_similarity_measure.h"
 #include "algorithms/md/hymd/preprocessing/similarity_measure/levenshtein_similarity_measure.h"
 #include "algorithms/md/hymd/preprocessing/similarity_measure/monge_elkan_similarity_measure.h"
@@ -46,9 +46,9 @@ void BindMd(py::module_& main_module) {
                                                                       "MongeElkanSimilarity")
             .def(py::init<model::md::DecisionBoundary>(), "minimum_similarity"_a = 0.7);
 
-    py::class_<JacaardSimilarityMeasure::Creator, SimilarityMeasureCreator,
-               std::shared_ptr<JacaardSimilarityMeasure::Creator>>(measures_module,
-                                                                   "JacaardSimilarity")
+    py::class_<JaccardSimilarityMeasure::Creator, SimilarityMeasureCreator,
+               std::shared_ptr<JaccardSimilarityMeasure::Creator>>(measures_module,
+                                                                   "JaccardSimilarity")
             .def(py::init<model::md::DecisionBoundary>(), "minimum_similarity"_a = 0.7);
 
     py::class_<DateSimilarityMeasure::Creator, SimilarityMeasureCreator,
