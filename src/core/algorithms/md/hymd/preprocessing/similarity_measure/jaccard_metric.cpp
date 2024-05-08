@@ -1,8 +1,8 @@
-#include "algorithms/md/hymd/preprocessing/similarity_measure/jacaard_metric.h"
+#include "algorithms/md/hymd/preprocessing/similarity_measure/jaccard_metric.h"
 
 #include <unordered_set>
 
-double JacaardMetric(std::string const& word1, std::string const& word2) {
+double JaccardMetric(std::string const& word1, std::string const& word2) {
     std::unordered_set<char> set1(word1.begin(), word1.end());
     std::unordered_set<char> set2(word2.begin(), word2.end());
 
