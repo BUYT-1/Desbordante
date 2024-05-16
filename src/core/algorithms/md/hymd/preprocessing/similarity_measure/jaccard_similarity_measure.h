@@ -32,7 +32,7 @@ public:
                   [min_sim](std::byte const* l, std::byte const* r) {
                       std::string const& left = model::Type::GetValue<model::String>(l);
                       std::string const& right = model::Type::GetValue<model::String>(r);
-                      Similarity sim = JaccardMetric(left, right);
+                      Similarity sim = JaccardIndex(left, right);
                       if (sim < min_sim) return kLowestBound;
                       return sim;
                   }) {}
