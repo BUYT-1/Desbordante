@@ -76,13 +76,13 @@ namespace algos::hy {
 template <typename F>
 void Sampler::RunWindowImpl(Efficiency& efficiency, model::PositionListIndex const& pli,
                             F store_match) {
-    efficiency.IncrementWindow();
+    efficiency.IncrementParameter();
 
     size_t const num_attributes = agree_sets_->NumAttributes();
     size_t const prev_num_agree_sets = agree_sets_->Count();
 
     unsigned comparisons = 0;
-    unsigned const window = efficiency.GetWindow();
+    unsigned const window = efficiency.GetParameter();
 
     for (model::PLI::Cluster const& cluster : pli.GetIndex()) {
         boost::dynamic_bitset<> equal_attrs(num_attributes);

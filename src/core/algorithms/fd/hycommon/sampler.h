@@ -6,11 +6,12 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include "all_column_combinations.h"
+#include "algorithms/fd/hycommon/all_column_combinations.h"
+#include "algorithms/fd/hycommon/efficiency.h"
+#include "algorithms/fd/hycommon/efficiency_threshold.h"
 #include "config/thread_number/type.h"
-#include "efficiency_threshold.h"
+#include "fd/hycommon/types.h"
 #include "model/table/position_list_index.h"
-#include "types.h"
 
 namespace boost::asio {
 // Forward declare thread_pool to avoid including boost::asio::thread_pool implementation since
@@ -22,7 +23,6 @@ namespace algos::hy {
 
 class Sampler {
 private:
-    class Efficiency;
     double efficiency_threshold_ = kEfficiencyThreshold;
 
     PLIsPtr plis_;
