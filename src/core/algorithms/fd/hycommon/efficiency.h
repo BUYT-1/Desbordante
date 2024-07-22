@@ -1,16 +1,16 @@
-#pragma once
-
 #include <cstddef>
+
+#include "sampler.h"
 
 namespace algos::hy {
 
-class Efficiency {
+class Sampler::Efficiency {
 private:
     size_t column_id_;
 
     unsigned num_violations_ = 0;
     unsigned num_comparisons_ = 0;
-    unsigned parameter_ = 0;
+    unsigned window_ = 0;
 
 public:
     explicit Efficiency(size_t column_id) noexcept : column_id_(column_id) {}
@@ -23,8 +23,8 @@ public:
         return 1.00 * num_violations_ / num_comparisons_;
     }
 
-    void IncrementParameter() noexcept {
-        parameter_++;
+    void IncrementWindow() noexcept {
+        window_++;
     }
 
     void SetComparisons(unsigned num_new_comparisons) noexcept {
@@ -39,8 +39,8 @@ public:
         return column_id_;
     }
 
-    [[nodiscard]] unsigned GetParameter() const noexcept {
-        return parameter_;
+    [[nodiscard]] unsigned GetWindow() const noexcept {
+        return window_;
     }
 
     bool operator<(Efficiency const& other) const noexcept {
