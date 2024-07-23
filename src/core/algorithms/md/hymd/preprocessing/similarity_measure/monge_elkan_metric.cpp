@@ -1,37 +1,27 @@
 #include "algorithms/md/hymd/preprocessing/similarity_measure/monge_elkan_metric.h"
 
 #include <algorithm>
-#include <vector>
 
-#include "algorithms/md/hymd/preprocessing/similarity_measure/jaccard_similarity_measure.h"
+#include "algorithms/md/hymd/preprocessing/similarity_measure/levenshtein_sim_measure.h"
 
-double MongeElkan(std::string const& word1, std::string const& word2) {
-    double cummax = 0.0;
-    std::vector<std::string> words1;
-    std::vector<std::string> words2;
+double normalizedLevenshteinSimilarity(std::string const& s1, std::string const& s2) {
+    int dist = LevenshteinDistance(s1, s2);
+    int max_len = std::max(s1.size(), s2.size());
+    return 1.0 - static_cast<double>(dist) / max_len;
+}
 
-    size_t start = 0;
-    size_t end = 0;
-    while ((end = word1.find(" ", start)) != std::string::npos) {
-        words1.push_back(word1.substr(start, end - start));
-        start = end + 1;
-    }
-    words1.push_back(word1.substr(start));
+double MongeElkan(std::vector<std::string> const& a, std::vector<std::string> const& b) {
+    if (a.empty()) return 0.0;
 
-    start = 0;
-    while ((end = word2.find(" ", start)) != std::string::npos) {
-        words2.push_back(word2.substr(start, end - start));
-        start = end + 1;
-    }
-    words2.push_back(word2.substr(start));
-
-    for (auto const& w1 : words1) {
-        double maxscore = 0.0;
-        for (auto const& w2 : words2) {
-            maxscore = std::max(maxscore, JaccardIndex(w1, w2));
+    double sum = 0.0;
+    for (auto const& s : a) {
+        double max_sim = std::numeric_limits<double>::lowest();
+        for (auto const& q : b) {
+            double similarity = normalizedLevenshteinSimilarity(s, q);
+            max_sim = std::max(max_sim, similarity);
         }
-        cummax += maxscore;
+        sum += (max_sim == std::numeric_limits<double>::lowest() ? 0 : max_sim);
     }
 
-    return cummax / words1.size();
+    return sum / a.size();
 }

@@ -1,3 +1,4 @@
 #include <string>
+#include <vector>
 
-double MongeElkan(std::string const& word1, std::string const& word2);
+double MongeElkan(std::vector<std::string> const& a, std::vector<std::string> const& b);
