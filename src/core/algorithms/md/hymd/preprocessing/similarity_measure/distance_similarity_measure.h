@@ -11,20 +11,24 @@ class DistanceSimilarityMeasure : public SimilarityMeasure {
 private:
     DistanceFunction const compute_distance_;
     model::md::DecisionBoundary min_sim_;
+    util::WorkerThreadPool* const pool_;
+    std::size_t const size_limit_;
 
     [[nodiscard]] indexes::SimilarityMeasureOutput MakeIndexes(
             std::shared_ptr<DataInfo const> data_info_left,
             std::shared_ptr<DataInfo const> data_info_right,
-            std::vector<indexes::PliCluster> const& clusters_right,
-            util::WorkerThreadPool& thread_pool) const final;
+            std::vector<indexes::PliCluster> const& clusters_right) const final;
 
 public:
     DistanceSimilarityMeasure(std::unique_ptr<model::Type> arg_type,
                               DistanceFunction compute_distance,
-                              model::md::DecisionBoundary min_sim)
+                              model::md::DecisionBoundary min_sim,
+                              util::WorkerThreadPool* thread_pool, std::size_t size_limit)
         : SimilarityMeasure(std::move(arg_type), std::make_unique<model::DoubleType>()),
           compute_distance_(std::move(compute_distance)),
-          min_sim_(min_sim){};
+          min_sim_(min_sim),
+          pool_(thread_pool),
+          size_limit_(size_limit){};
 };
 
 }  // namespace algos::hymd::preprocessing::similarity_measure
