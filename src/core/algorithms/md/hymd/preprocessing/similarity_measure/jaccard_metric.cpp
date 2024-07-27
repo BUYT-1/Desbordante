@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <iterator>
-#include <set>
 #include <sstream>
 
 template <typename T>
