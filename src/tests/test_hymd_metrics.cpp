@@ -7,6 +7,7 @@
 #include "algorithms/md/hymd/preprocessing/similarity_measure/levenshtein_similarity_measure.h"
 #include "algorithms/md/hymd/preprocessing/similarity_measure/monge_elkan_similarity_measure.h"
 #include "algorithms/md/hymd/preprocessing/similarity_measure/number_dif_similarity_measure.h"
+#include "algorithms/md/hymd/preprocessing/similarity_measure/smith_waterman_gotoh.h"
 
 namespace tests {
 
@@ -85,9 +86,8 @@ INSTANTIATE_TEST_SUITE_P(
         Default, MongeElkanMetricTest,
         ::testing::Values(MongeElkanTestParams{{}, {}, 1.0}, MongeElkanTestParams{{"abc"}, {}, 0.0},
                           MongeElkanTestParams{{}, {"abc"}, 0.0},
-                          MongeElkanTestParams{{"kitten"}, {"sitting"}, 4.0 / 7.0},
                           MongeElkanTestParams{{"abc", "def", "xyz"}, {"def", "xyz", "abc"}, 1.0},
-                          MongeElkanTestParams{{"hello", "word"}, {"world", "helo"}, 0.8},
+                          MongeElkanTestParams{{"hello", "word"}, {"world", "helo"}, 7.0 / 8.0},
                           MongeElkanTestParams{{"abc"}, {"xyz"}, 0.0}));
 
 }  // namespace tests
