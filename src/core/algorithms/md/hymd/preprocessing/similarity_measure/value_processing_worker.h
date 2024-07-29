@@ -86,8 +86,7 @@ auto GetResults(std::shared_ptr<DataInfo const> const& data_info_left,
                 auto start_full, auto finish, Args&&... args) {
     ValidTableResults<Similarity> task_data{data_info_left->GetElementNumber()};
     WorkerType worker{data_info_left, data_info_right, clusters_right, task_data,
-                      std::forward<Args>(args)...};  
-
+                      std::forward<Args>(args)...};
     if (data_info_left == data_info_right) {
         start_same(worker);
     } else {
@@ -105,7 +104,7 @@ indexes::SimilarityMeasureOutput MakeIndexesTemplate(
         std::shared_ptr<DataInfo const> data_info_left,
         std::shared_ptr<DataInfo const> data_info_right,
         std::vector<indexes::PliCluster> const& clusters_right, util::WorkerThreadPool* pool,
-        std::size_t size_limit_, Args&&... args) {
+        auto const& picker_, Args&&... args) {
     std::pair<std::vector<preprocessing::Similarity>, EnumeratedValidTableResults> results;
 
     if (pool == nullptr) {
@@ -124,11 +123,8 @@ indexes::SimilarityMeasureOutput MakeIndexesTemplate(
     auto& [similarities, enumerated_results] = results;
     if (data_info_left == data_info_right) SymmetricClosure(enumerated_results, clusters_right);
 
-    auto pick_index_uniform = [size_limit_](auto const& bounds) {
-        return ccv_id_pickers::IndexUniform(bounds.size(), size_limit_);
-    };
     return BuildIndexes(std::move(enumerated_results), std::move(similarities), clusters_right,
-                        pick_index_uniform);
+                        picker_);
 }
 
 }  // namespace algos::hymd::preprocessing::similarity_measure

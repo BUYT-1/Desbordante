@@ -3,11 +3,11 @@
 #include <algorithm>
 #include <vector>
 
-double substitutionCompare(char a, char b) {
+double SubstitutionCompare(char a, char b) {
     return (a == b) ? 1.0 : -2.0;
 }
 
-double smithWatermanGotoh(std::string const& s, std::string const& t, double gapValue = -0.5) {
+double SmithWatermanGotoh(std::string const& s, std::string const& t, double gapValue = -0.5) {
     std::vector<double> v0(t.length() + 1, 0.0);
     std::vector<double> v1(t.length() + 1, 0.0);
 
@@ -15,10 +15,10 @@ double smithWatermanGotoh(std::string const& s, std::string const& t, double gap
 
     for (size_t i = 1; i <= s.length(); ++i) {
         for (size_t j = 1; j <= t.length(); ++j) {
-            double match = v0[j - 1] + substitutionCompare(s[i - 1], t[j - 1]);
-            double deleteFromS = v0[j] + gapValue;
-            double deleteFromT = v1[j - 1] + gapValue;
-            v1[j] = std::max({0.0, match, deleteFromS, deleteFromT});
+            double match = v0[j - 1] + SubstitutionCompare(s[i - 1], t[j - 1]);
+            double delete_from_s = v0[j] + gapValue;
+            double delete_from_t = v1[j - 1] + gapValue;
+            v1[j] = std::max({0.0, match, delete_from_s, delete_from_t});
             max = std::max(max, v1[j]);
         }
         std::swap(v0, v1);
@@ -27,8 +27,7 @@ double smithWatermanGotoh(std::string const& s, std::string const& t, double gap
     return max;
 }
 
-double normalizedSmithWatermanGotoh(std::string const& s, std::string const& t,
-                                    double gapValue = -0.5) {
+double NormalizedSmithWatermanGotoh(std::string const& s, std::string const& t, double gapValue) {
     if (s.empty() && t.empty()) {
         return 1.0;
     }
@@ -37,6 +36,6 @@ double normalizedSmithWatermanGotoh(std::string const& s, std::string const& t,
         return 0.0;
     }
 
-    double maxDistance = std::min(s.length(), t.length()) * std::max(1.0, gapValue);
-    return smithWatermanGotoh(s, t, gapValue) / maxDistance;
+    double max_distance = std::min(s.length(), t.length()) * std::max(1.0, gapValue);
+    return SmithWatermanGotoh(s, t, gapValue) / max_distance;
 }

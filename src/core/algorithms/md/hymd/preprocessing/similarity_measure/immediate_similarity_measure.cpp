@@ -42,8 +42,7 @@ indexes::SimilarityMeasureOutput ImmediateSimilarityMeasure::MakeIndexes(
         std::shared_ptr<DataInfo const> data_info_left,
         std::shared_ptr<DataInfo const> data_info_right,
         std::vector<indexes::PliCluster> const& clusters_right) const {
-    return MakeIndexesTemplate<ImmediateValueProcessingWorker>(data_info_left, data_info_right,
-                                                               clusters_right, pool_, size_limit_,
-                                                               compute_similarity_);
+    return MakeIndexesTemplate<ImmediateValueProcessingWorker>(
+            data_info_left, data_info_right, clusters_right, pool_, picker_, compute_similarity_);
 }
 }  // namespace algos::hymd::preprocessing::similarity_measure
