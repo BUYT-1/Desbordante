@@ -1,6 +1,7 @@
 #pragma once
 
 #include "algorithms/md/hymd/lowest_bound.h"
+#include "algorithms/md/hymd/preprocessing/ccv_id_pickers/index_uniform.h"
 #include "algorithms/md/hymd/preprocessing/similarity_measure/similarity_measure.h"
 #include "model/types/double_type.h"
 
@@ -11,6 +12,7 @@ class ImmediateSimilarityMeasure : public SimilarityMeasure {
 private:
     SimilarityFunction const compute_similarity_;
     util::WorkerThreadPool* const pool_;
+    ccv_id_pickers::IndexUniform picker_{size_limit_};
     std::size_t const size_limit_;
 
     [[nodiscard]] indexes::SimilarityMeasureOutput MakeIndexes(

@@ -6,7 +6,7 @@
 
 namespace algos::hymd::preprocessing::similarity_measure {
 
-std::vector<std::string> tokenize(std::string const& text) {
+std::vector<std::string> Tokenize(std::string const& text) {
     std::istringstream iss(text);
     std::vector<std::string> tokens;
     std::string token;
@@ -46,8 +46,8 @@ public:
                   [min_sim](std::byte const* l, std::byte const* r) {
                       std::string const& left = model::Type::GetValue<std::string>(l);
                       std::string const& right = model::Type::GetValue<std::string>(r);
-                      auto left_tokens = tokenize(left);
-                      auto right_tokens = tokenize(right);
+                      auto left_tokens = Tokenize(left);
+                      auto right_tokens = Tokenize(right);
                       Similarity sim = MongeElkan(left_tokens, right_tokens);
                       return sim < min_sim ? kLowestBound : sim;
                   },

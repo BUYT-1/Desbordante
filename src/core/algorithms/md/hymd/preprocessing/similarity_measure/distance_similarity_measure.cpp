@@ -56,7 +56,7 @@ indexes::SimilarityMeasureOutput DistanceSimilarityMeasure::MakeIndexes(
         std::shared_ptr<DataInfo const> data_info_right,
         std::vector<indexes::PliCluster> const& clusters_right) const {
     return MakeIndexesTemplate<DistanceValueProcessingWorker>(data_info_left, data_info_right,
-                                                              clusters_right, pool_, size_limit_,
+                                                              clusters_right, pool_, picker_,
                                                               compute_distance_, min_sim_);
 }
 }  // namespace algos::hymd::preprocessing::similarity_measure
