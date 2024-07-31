@@ -19,7 +19,7 @@ public:
             ValidTableResults<Similarity>& task_data,
             std::function<double(std::byte const*, std::byte const*)> compute_distance,
             Similarity min_sim)
-        : Base(data_info_left, data_info_right, clusters_right, task_data),
+        : Base(std::move(data_info_left), std::move(data_info_right), clusters_right, task_data),
           compute_distance_(compute_distance),
           min_sim_(min_sim) {}
 
@@ -28,10 +28,11 @@ public:
         bool dissimilar_found_here = false;
         double max_distance = 0;
         std::vector<double> distances(Base::data_right_size_);
+        std::byte const* left_value = Base::data_info_left_->GetAt(left_value_id);
         for (ValueIdentifier right_index = start_from; right_index != Base::data_right_size_;
              ++right_index) {
-            double distance = compute_distance_(Base::data_info_left_->GetAt(left_value_id),
-                                                Base::data_info_right_->GetAt(right_index));
+            double distance =
+                    compute_distance_(left_value, Base::data_info_right_->GetAt(right_index));
             distances[right_index] = distance;
             if (distance > max_distance) {
                 max_distance = distance;
