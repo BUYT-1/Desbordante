@@ -17,22 +17,22 @@ public:
             std::vector<indexes::PliCluster> const& clusters_right,
             ValidTableResults<Similarity>& task_data,
             std::function<Similarity(std::byte const*, std::byte const*)> compute_similarity)
-        : Base(data_info_left, data_info_right, clusters_right, task_data),
+        : Base(std::move(data_info_left), std::move(data_info_right), clusters_right, task_data),
           compute_similarity_(compute_similarity) {}
 
     bool CalcAndAdd(ValueIdentifier left_value_id, RowInfo<Similarity>& row_info,
                     ValueIdentifier start_from) override {
         bool dissimilar_found_here = false;
-        for (ValueIdentifier value_id_right = start_from; value_id_right != Base::data_right_size_;
-             ++value_id_right) {
-            Similarity similarity =
-                    compute_similarity_(Base::data_info_left_->GetAt(left_value_id),
-                                        Base::data_info_right_->GetAt(value_id_right));
+        std::byte const* left_value = Base::data_info_left_->GetAt(left_value_id);
+        for (ValueIdentifier right_index = start_from; right_index != Base::data_right_size_;
+             ++right_index) {
+            double similarity =
+                    compute_similarity_(left_value, Base::data_info_right_->GetAt(right_index));
             if (similarity == kLowestBound) {
                 dissimilar_found_here = true;
                 continue;
             }
-            Base::AddValue(row_info, value_id_right, similarity);
+            Base::AddValue(row_info, right_index, similarity);
         }
         return dissimilar_found_here;
     }

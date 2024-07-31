@@ -13,8 +13,8 @@ private:
     DistanceFunction const compute_distance_;
     model::md::DecisionBoundary min_sim_;
     util::WorkerThreadPool* const pool_;
-    ccv_id_pickers::IndexUniform picker_{size_limit_};
     std::size_t const size_limit_;
+    ccv_id_pickers::IndexUniform picker_{size_limit_};
 
     [[nodiscard]] indexes::SimilarityMeasureOutput MakeIndexes(
             std::shared_ptr<DataInfo const> data_info_left,
