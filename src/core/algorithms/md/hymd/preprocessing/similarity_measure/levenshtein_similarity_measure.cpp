@@ -127,7 +127,6 @@ std::size_t LevenshteinDistanceMain(unsigned* p, unsigned* d, std::size_t max_di
 std::size_t LevenshteinDistance(std::string const* l_ptr, std::string const* r_ptr, unsigned* p,
                                 unsigned* d, std::size_t max_dist,
                                 std::size_t fail_value) noexcept {
-    assert(v0 < v1);
     std::size_t r_size = r_ptr->size();
     std::size_t l_size = l_ptr->size();
     if (l_size > r_size) {
