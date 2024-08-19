@@ -456,7 +456,7 @@ std::size_t MdLattice::MdRefiner::Refine() {
     std::size_t removed = 0;
     for (auto new_rhs : invalidated_.GetUpdateView()) {
         auto const& [rhs_index, new_ccv_id] = new_rhs;
-        DESBORDANTE_ASSUME((*node_info_.rhs)[rhs_index] != kLowestCCValueId);
+        DESBORDANTE_ASSUME(node_info_.rhs->begin[rhs_index] != kLowestCCValueId);
         node_info_.rhs->Set(rhs_index, kLowestCCValueId);
         bool const trivial = new_ccv_id == kLowestCCValueId;
         if (trivial) {
@@ -468,7 +468,7 @@ std::size_t MdLattice::MdRefiner::Refine() {
             ++removed;
             continue;
         }
-        DESBORDANTE_ASSUME((*node_info_.rhs)[rhs_index] == kLowestCCValueId &&
+        DESBORDANTE_ASSUME(node_info_.rhs->begin[rhs_index] == kLowestCCValueId &&
                            new_ccv_id != kLowestCCValueId);
         node_info_.rhs->Set(rhs_index, new_ccv_id);
     }
