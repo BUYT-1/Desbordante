@@ -49,7 +49,7 @@ struct Rhs {
         auto ccv_ids_it = ccv_ids.begin();
         for (model::Index index : indices) {
             DESBORDANTE_ASSUME(*ccv_ids_it != kLowestCCValueId);
-            begin[index] = *ccv_ids_it;
+            begin[index] = *ccv_ids_it++;
         }
         return ccv_ids;
     }
