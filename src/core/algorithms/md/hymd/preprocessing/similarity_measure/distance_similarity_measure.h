@@ -72,7 +72,7 @@ class LVNormalizedDistanceCalculator {
                 DistanceType distance = distances[value_id_right];
                 preprocessing::Similarity normalized_distance =
                         (max_distance - distance) /
-                        static_cast<preprocessing::Similarity>(distance);
+                        static_cast<preprocessing::Similarity>(max_distance);
                 if (normalized_distance < min_sim_) {
                     dissimilar_found = true;
                     continue;
