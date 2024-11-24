@@ -10,7 +10,7 @@ option(USE_LTO "Build using interprocedural optimization" OFF)
 option(GDB_DEBUG "Include debug information for use by GDB" OFF)
 set(SANITIZER "" CACHE STRING "Build with sanitizer, possible values: ADDRESS, UB")
 
-set(PYTHON OFF CACHE STRING "Compile Python bindings")
+set(PYTHON OFF CACHE STRING "Compile Python bindings testest")
 set_property(CACHE PYTHON PROPERTY STRINGS OFF COMPILE INSTALL)
 
 # By default select Debug build
