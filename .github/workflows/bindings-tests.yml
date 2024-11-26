@@ -32,8 +32,6 @@ jobs:
   test-python-bindings:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          pip3 --version
       - uses: actions/checkout@v3
       - name: Download libraries
         uses: ./.github/composite-actions/download-libraries
@@ -48,6 +46,7 @@ jobs:
           cp test_input_data/TestLong.csv src/python_bindings/
           cp test_input_data/TestWide.csv src/python_bindings/
           cp test_input_data/transactional_data/rules-kaggle-rows.csv src/python_bindings/
+          pip install --upgrade pip
           pip install .
           cd src/python_bindings
           python test_bindings.py
