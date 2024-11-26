@@ -32,6 +32,8 @@ jobs:
   test-python-bindings:
     runs-on: ubuntu-latest
     steps:
+      - run: |
+          pip3 --version
       - uses: actions/checkout@v3
       - name: Download libraries
         uses: ./.github/composite-actions/download-libraries
