@@ -11,7 +11,7 @@ on:
       - images/**
       - .gitignore
       - COPYING
-      - build.bat
+      - build.*
       - pull_datasets.sh
   push:
     branches:
@@ -25,7 +25,7 @@ on:
       - images/**
       - .gitignore
       - COPYING
-      - build.bat
+      - build.*
       - pull_datasets.sh
   workflow_dispatch:
 jobs:
