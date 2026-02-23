@@ -187,9 +187,9 @@ REGISTER_TYPED_TEST_SUITE_P(AlgorithmTest, ThrowsOnEmpty, ReturnsEmptyOnSingleNo
                             HeavyDatasetsConsistentHash, ConsistentRepeatedExecution,
                             MaxLHSOptionWork);
 
-using Algorithms =
-        ::testing::Types<algos::Tane, algos::Pyro, algos::FastFDs, algos::DFD, algos::Depminer,
-                         algos::FDep, algos::FUN, algos::hyfd::HyFD, algos::PFDTane>;
+using Algorithms = ::testing::Types<algos::Tane, algos::Pyro, algos::FastFDs, algos::DFD,
+                                    algos::Depminer, algos::FUN, algos::hyfd::HyFD, algos::PFDTane>;
+
 INSTANTIATE_TYPED_TEST_SUITE_P(AlgorithmTest, AlgorithmTest, Algorithms);
 
 TYPED_TEST_SUITE_P(AlgorithmTestNew);
@@ -269,7 +269,7 @@ TYPED_TEST_P(AlgorithmTestNew, MaxLHSOptionWork) {
 
     auto algo_large = TestFixture::CreateAlgorithmInstance(kCIPublicHighway700, max_lhs);
     algo_large->Execute();
-    MaxLhsTestFun(kCIPublicHighway700, algo->GetFdStorage()->GetStripped(), max_lhs);
+    MaxLhsTestFun(kCIPublicHighway700, algo_large->GetFdStorage()->GetStripped(), max_lhs);
 }
 
 REGISTER_TYPED_TEST_SUITE_P(AlgorithmTestNew, ThrowsOnEmpty, ReturnsEmptyOnSingleNonKey,
@@ -277,7 +277,7 @@ REGISTER_TYPED_TEST_SUITE_P(AlgorithmTestNew, ThrowsOnEmpty, ReturnsEmptyOnSingl
                             HeavyDatasetsConsistentHash, ConsistentRepeatedExecution,
                             MaxLHSOptionWork);
 
-using AlgorithmsNew = ::testing::Types<>;
+using AlgorithmsNew = ::testing::Types<algos::FDep>;
 
 INSTANTIATE_TYPED_TEST_SUITE_P(AlgorithmTestNew, AlgorithmTestNew, AlgorithmsNew);
 

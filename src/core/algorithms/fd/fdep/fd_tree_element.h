@@ -8,7 +8,10 @@
 #include <fstream>
 #include <string>
 
+#include <boost/dynamic_bitset.hpp>
+
 #include "core/algorithms/fd/fd.h"
+#include "core/algorithms/fd/lhs_lim_fd_storage_builder.h"
 #include "core/model/table/relational_schema.h"
 #include "core/model/types/bitset.h"
 
@@ -41,15 +44,12 @@ public:
     [[nodiscard]] bool ContainsGeneralization(model::Bitset<kMaxAttrNum> const& lhs,
                                               size_t attr_num, size_t current_attr) const;
 
-    // Printing found dependencies in output file.
-    void PrintDep(std::string const& file, std::vector<std::string>& column_names) const;
-
-    void FillFdCollection(std::shared_ptr<RelationalSchema> const& scheme,
-                          std::list<FD>& fd_collection,
-                          unsigned int max_lhs = std::numeric_limits<unsigned int>::max()) const;
+    void CreateAnswer(std::size_t attr_num, algos::LhsLimFdStorageBuilder& builder,
+                      unsigned int max_lhs = std::numeric_limits<unsigned int>::max()) const;
 
 private:
     std::vector<std::unique_ptr<FDTreeElement>> children_;
+    // TODO: why is this not dynamic_bitset?
     model::Bitset<kMaxAttrNum> rhs_attributes_;
     size_t max_attribute_number_;
     model::Bitset<kMaxAttrNum> is_fd_;
@@ -70,12 +70,7 @@ private:
     void FilterSpecializationsHelper(FDTreeElement& filtered_tree,
                                      model::Bitset<kMaxAttrNum>& active_path);
 
-    // Helper function for PrintDep.
-    void PrintDependencies(model::Bitset<kMaxAttrNum>& active_path, std::ofstream& file,
-                           std::vector<std::string>& column_names) const;
-
     void TransformTreeFdCollection(
-            model::Bitset<kMaxAttrNum>& active_path, std::list<FD>& fd_collection,
-            std::shared_ptr<RelationalSchema> const& scheme,
+            boost::dynamic_bitset<>& lhs, algos::LhsLimFdStorageBuilder& builder,
             unsigned int max_lhs = std::numeric_limits<unsigned int>::max()) const;
 };

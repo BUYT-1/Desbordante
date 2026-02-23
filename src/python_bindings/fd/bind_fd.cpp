@@ -248,12 +248,15 @@ void BindFd(py::module_& main_module) {
     static constexpr auto kPyroName = "Pyro";
     static constexpr auto kTaneName = "Tane";
     static constexpr auto kPFDTaneName = "PFDTane";
-    auto fd_algos_module = BindPrimitive<hyfd::HyFD, Aid, EulerFD, Depminer, DFD, FastFDs, FDep,
-                                         FdMine, FUN, Pyro, Tane, PFDTane>(
-            fd_module, &FDAlgorithm::SortedFdList, "FdAlgorithm", "get_fds",
-            {"HyFD", "Aid", "EulerFD", "Depminer", "DFD", "FastFDs", "FDep", "FdMine", "FUN",
-             kPyroName, kTaneName, kPFDTaneName},
-            pybind11::return_value_policy::copy);
+    auto fd_algos_module =
+            BindPrimitive<hyfd::HyFD, Aid, EulerFD, Depminer, DFD, FastFDs, FdMine, FUN, Pyro, Tane,
+                          PFDTane>(fd_module, &FDAlgorithm::SortedFdList, "FdAlgorithm", "get_fds",
+                                   {"HyFD", "Aid", "EulerFD", "Depminer", "DFD", "FastFDs",
+                                    "FdMine", "FUN", kPyroName, kTaneName, kPFDTaneName},
+                                   pybind11::return_value_policy::copy);
+    detail::RegisterAlgorithm<FDep, Algorithm>(fd_algos_module, "FDep")
+            .def("get_fd_storage", &FDep::GetFdStorage)
+            .def("get_fds", [](FDep& fdep) { return FdsToList(*fdep.GetFdStorage()); });
 
     auto define_submodule = [&fd_algos_module, &main_module](char const* name,
                                                              std::vector<char const*> algorithms) {
