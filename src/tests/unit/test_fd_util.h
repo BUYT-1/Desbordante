@@ -124,6 +124,36 @@ protected:
         };
     }
 
+    static std::vector<std::string> FDToJsonStrings(algos::MultiAttrRhsStrippedFd const& fd) {
+        std::vector<std::string> strings;
+        strings.reserve(fd.rhs.count());
+        auto pre_rhs_portion = "{\"lhs\": " + ToIndicesString(fd.lhs) + ", \"rhs\": ";
+        util::ForEachIndex(fd.rhs, [&](model::Index i) {
+            strings.push_back(pre_rhs_portion + std::to_string(i) + '}');
+        });
+        return strings;
+    }
+
+    static std::string FDsToJson(algos::MultiAttrRhsFdStorage const& fd_storage) {
+        std::string result = "{\"fds\": [";
+        std::vector<std::string> discovered_fd_strings;
+        // FDs used to always have one attribute, this is for consistency with the old hashes.
+        for (algos::MultiAttrRhsStrippedFd const& fd : fd_storage.GetStripped()) {
+            for (std::string const& single_rhs_fd_string : FDToJsonStrings(fd)) {
+                discovered_fd_strings.push_back(single_rhs_fd_string);
+            }
+        }
+        std::sort(discovered_fd_strings.begin(), discovered_fd_strings.end());
+        for (std::string const& fd : discovered_fd_strings) {
+            result += fd + ",";
+        }
+        if (result.back() == ',') {
+            result.erase(result.size() - 1);
+        }
+        result += "]}";
+        return result;
+    }
+
     static unsigned int Fletcher16(std::string str) {
         unsigned int sum1 = 0, sum2 = 0, modulus = 255;
         for (auto ch : str) {
@@ -139,7 +169,7 @@ protected:
             for (auto const& [csv_config, hash] : config_hashes) {
                 auto algorithm = CreateAlgorithmInstance(csv_config);
                 algorithm->Execute();
-                std::string fds_string = FDsToJson(algorithm->GetFdStorage()->GetStripped());
+                std::string fds_string = FDsToJson(*algorithm->GetFdStorage());
                 EXPECT_EQ(Fletcher16(fds_string), hash)
                         << "FD collection hash changed for " << csv_config.path.filename();
             }

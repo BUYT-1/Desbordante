@@ -63,6 +63,27 @@ testing::AssertionResult CheckFdCollectionEquality(
                           : testing::AssertionFailure() << "some FDs remain undiscovered";
 }
 
+testing::AssertionResult CheckFdCollectionEquality(
+        std::set<std::pair<std::vector<unsigned int>, unsigned int>> expected,
+        algos::MultiAttrRhsFdStorage const& actual) {
+    for (algos::MultiAttrRhsStrippedFd const& fd : actual.GetStripped()) {
+        std::vector<unsigned int> lhs_indices = BitsetToIndexVector(fd.lhs);
+        std::sort(lhs_indices.begin(), lhs_indices.end());
+
+        for (auto index = fd.rhs.find_first(); index != boost::dynamic_bitset<>::npos;
+             index = fd.rhs.find_next(index)) {
+            if (auto it = expected.find(std::make_pair(lhs_indices, index)); it == expected.end()) {
+                return testing::AssertionFailure()
+                       << "discovered a false FD: " << ToIndicesString(fd.lhs) << "->" << index;
+            } else {
+                expected.erase(it);
+            }
+        }
+    }
+    return expected.empty() ? testing::AssertionSuccess()
+                            : testing::AssertionFailure() << "some FDs remain undiscovered";
+}
+
 std::set<std::pair<std::vector<unsigned int>, unsigned int>> FDsToSet(std::list<FD> const& fds) {
     std::set<std::pair<std::vector<unsigned int>, unsigned int>> set;
     for (auto const& fd : fds) {
@@ -70,6 +91,20 @@ std::set<std::pair<std::vector<unsigned int>, unsigned int>> FDsToSet(std::list<
         set.emplace(BitsetToIndexVector(raw_fd.lhs_), raw_fd.rhs_);
     }
     return set;
+}
+
+std::set<std::pair<std::vector<unsigned int>, unsigned int>> FDsToSet(
+        algos::MultiAttrRhsFdStorage const& storage) {
+    std::set<std::pair<std::vector<unsigned int>, unsigned int>> set;
+    for (auto const& fd : storage.GetStripped()) {
+        util::ForEachIndex(fd.rhs,
+                           [&](model::Index i) { set.emplace(BitsetToIndexVector(fd.lhs), i); });
+    }
+    return set;
+}
+
+bool NoFDsFound(algos::MultiAttrRhsFdStorage const& storage) {
+    return storage.GetStripped().empty();
 }
 
 TYPED_TEST_SUITE_P(AlgorithmTest);
@@ -202,7 +237,7 @@ TYPED_TEST_P(FdDiscoveryTest, HeavyDatasetsConsistentHash) {
 TYPED_TEST_P(FdDiscoveryTest, ConsistentRepeatedExecution) {
     auto algorithm = TestFixture::CreateAlgorithmInstance(kWdcAstronomical);
     algorithm->Execute();
-    auto first_res = FDsToSet(algorithm->GetFdStorage()->GetStripped());
+    auto first_res = FDsToSet(*algorithm->GetFdStorage());
     for (int i = 0; i < 3; ++i) {
         algos::ConfigureFromMap(*algorithm, TestFixture::GetParamMap(kWdcAstronomical));
         algorithm->Execute();
@@ -211,7 +246,7 @@ TYPED_TEST_P(FdDiscoveryTest, ConsistentRepeatedExecution) {
 }
 
 namespace {
-void MaxLhsTestFun(CSVConfig config, std::deque<algos::MultiAttrRhsStrippedFd> const& fds_list,
+void MaxLhsTestFun(CSVConfig config, algos::MultiAttrRhsFdStorage const& fd_storage,
                    config::MaxLhsType max_lhs) {
     using namespace config::names;
     algos::StdParamsMap verify_params = {
@@ -222,8 +257,8 @@ void MaxLhsTestFun(CSVConfig config, std::deque<algos::MultiAttrRhsStrippedFd> c
     auto verify_algo = algos::CreateAndLoadAlgorithm<algos::Pyro>(verify_params);
     verify_algo->Execute();
     auto verify_list = FDsToSet(verify_algo->FdList());
-    ASSERT_TRUE(CheckFdListEquality(verify_list, fds_list));
-    for (auto& fd : fds_list) {
+    ASSERT_TRUE(CheckFdCollectionEquality(verify_list, fd_storage));
+    for (algos::MultiAttrRhsStrippedFd const& fd : fd_storage.GetStripped()) {
         ASSERT_TRUE(fd.lhs.count() <= max_lhs);
     }
 }
