@@ -4,8 +4,10 @@
 
 #include "core/algorithms/algo_factory.h"
 #include "core/algorithms/fd/fd_algorithm.h"
+#include "core/algorithms/fd/fd_storage.h"
 #include "core/config/error/type.h"
 #include "core/config/names.h"
+#include "core/util/bitset_utils.h"
 #include "tests/common/all_csv_configs.h"
 #include "tests/common/csv_config_util.h"
 
@@ -51,6 +53,136 @@ protected:
 
 public:
     static std::unique_ptr<algos::FDAlgorithm> CreateAlgorithmInstance(
+            CSVConfig const& config,
+            unsigned int max_lhs = std::numeric_limits<unsigned int>::max()) {
+        return algos::CreateAndLoadAlgorithm<T>(GetParamMap(config, max_lhs));
+    }
+
+    inline static std::vector<CSVConfigHash> const kLightDatasets = {
+            {{tests::kCIPublicHighway10k, 33398},
+             {tests::kNeighbors10k, 43368},
+             {tests::kWdcAstronomical, 22281},
+             {tests::kWdcAge, 19620},
+             {tests::kWdcAppearances, 25827},
+             {tests::kWdcAstrology, 40815},
+             {tests::kWdcGame, 6418},
+             {tests::kWdcScience, 19620},
+             {tests::kWdcSymbols, 28289},
+             {tests::kBreastCancer, 15121},
+             {tests::kWdcKepler, 63730}}};
+
+    inline static std::vector<CSVConfigHash> const kHeavyDatasets = {
+            {{tests::kAdult, 23075},
+             {tests::kCIPublicHighway, 13035},
+             {tests::kEpicMeds, 50218},
+             {tests::kEpicVitals, 2083},
+             {tests::kIowa1kk, 28573},
+             {tests::kLegacyPayors, 43612}}};
+};
+
+inline static std::string ToIndicesString(boost::dynamic_bitset<> const& lhs) {
+    std::string result = "[";
+
+    if (lhs.find_first() == boost::dynamic_bitset<>::npos) {
+        return "[]";
+    }
+
+    for (size_t index = lhs.find_first(); index != boost::dynamic_bitset<>::npos;
+         index = lhs.find_next(index)) {
+        result += std::to_string(index);
+        if (lhs.find_next(index) != boost::dynamic_bitset<>::npos) {
+            result += ',';
+        }
+    }
+
+    result += ']';
+
+    return result;
+}
+
+template <typename T>
+class AlgorithmTestNew : public ::testing::Test {
+protected:
+    static std::unique_ptr<algos::Algorithm> CreateAndConfToLoad(CSVConfig const& csv_config) {
+        using namespace config::names;
+        using algos::ConfigureFromMap, algos::StdParamsMap;
+
+        std::unique_ptr<algos::Algorithm> algorithm = std::make_unique<T>();
+        ConfigureFromMap(*algorithm, StdParamsMap{{kTable, MakeInputTable(csv_config)}});
+        return algorithm;
+    }
+
+    static algos::StdParamsMap GetParamMap(
+            CSVConfig const& csv_config,
+            unsigned int max_lhs_ = std::numeric_limits<unsigned int>::max()) {
+        using namespace config::names;
+        return {
+                {kCsvConfig, csv_config},
+                {kError, config::ErrorType{0.0}},
+                {kSeed, decltype(algos::pyro::Parameters::seed){0}},
+                {kMaximumLhs, max_lhs_},
+        };
+    }
+
+    static std::vector<std::string> FDToJsonStrings(algos::FdStorage::StrippedFd const& fd) {
+        std::vector<std::string> strings;
+        strings.reserve(fd.rhs.count());
+        auto pre_rhs_portion = "{\"lhs\": " + ToIndicesString(fd.lhs) + ", \"rhs\": ";
+        util::ForEachIndex(fd.rhs, [&](model::Index i) {
+            strings.push_back(pre_rhs_portion + std::to_string(i) + '}');
+        });
+        return strings;
+    }
+
+    template <typename Container>
+    static std::string FDsToJson(Container const& fds) {
+        std::string result = "{\"fds\": [";
+        std::vector<std::string> discovered_fd_strings;
+        // FDs used to always have one attribute, this is for consistency with the old hashes.
+        for (algos::FdStorage::StrippedFd const& fd : fds) {
+            for (std::string const& single_rhs_fd_string : FDToJsonStrings(fd)) {
+                discovered_fd_strings.push_back(single_rhs_fd_string);
+            }
+        }
+        std::sort(discovered_fd_strings.begin(), discovered_fd_strings.end());
+        for (std::string const& fd : discovered_fd_strings) {
+            result += fd + ",";
+        }
+        if (result.back() == ',') {
+            result.erase(result.size() - 1);
+        }
+        result += "]}";
+        return result;
+    }
+
+    static unsigned int Fletcher16(std::string str) {
+        unsigned int sum1 = 0, sum2 = 0, modulus = 255;
+        for (auto ch : str) {
+            sum1 = (sum1 + ch) % modulus;
+            sum2 = (sum2 + sum1) % modulus;
+        }
+        return (sum2 << 8) | sum1;
+    }
+
+    static void PerformConsistentHashTestOn(std::vector<CSVConfigHash> const& config_hashes) {
+        using namespace algos;
+        try {
+            for (auto const& [csv_config, hash] : config_hashes) {
+                auto algorithm = CreateAlgorithmInstance(csv_config);
+                algorithm->Execute();
+                std::string fds_string = FDsToJson(algorithm->GetFdStorage()->GetStripped());
+                EXPECT_EQ(Fletcher16(fds_string), hash)
+                        << "FD collection hash changed for " << csv_config.path.filename();
+            }
+        } catch (std::runtime_error& e) {
+            std::cout << "Exception raised in test: " << e.what() << std::endl;
+            FAIL();
+        }
+        SUCCEED();
+    }
+
+public:
+    static auto CreateAlgorithmInstance(
             CSVConfig const& config,
             unsigned int max_lhs = std::numeric_limits<unsigned int>::max()) {
         return algos::CreateAndLoadAlgorithm<T>(GetParamMap(config, max_lhs));

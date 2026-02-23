@@ -1,10 +1,12 @@
 #include "python_bindings/fd/bind_fd.h"
 
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 #include "core/algorithms/fd/fd.h"
 #include "core/algorithms/fd/fd_algorithm.h"
+#include "core/algorithms/fd/fd_storage.h"
 #include "core/algorithms/fd/mining_algorithms.h"
 #include "core/config/indices/type.h"
 #include "core/util/bitset_utils.h"
@@ -13,6 +15,11 @@
 
 namespace {
 namespace py = pybind11;
+
+#define FD_CLASS_NAME "FunctionalDependency"
+static constexpr auto kFdClassName = FD_CLASS_NAME;
+#define ATTRIBUTE_CLASS_NAME "Attribute"
+static constexpr auto kAttributeClassName = ATTRIBUTE_CLASS_NAME;
 
 template <typename ElementType>
 py::tuple VectorToTuple(std::vector<ElementType> vec) {
@@ -28,11 +35,100 @@ py::tuple MakeFdNameTuple(FD const& fd) {
     auto [lhs, rhs] = fd.ToNameTuple();
     return py::make_tuple(VectorToTuple(std::move(lhs)), std::move(rhs));
 }
+
+ssize_t AttributeHash(model::Attribute const& attr) {
+    return py::hash(py::make_tuple(attr.name, attr.id));
+}
+
+std::string AttributeRepr(model::Attribute const& attr) {
+    std::stringstream ss;
+    ss << kAttributeClassName << '(';
+    ss << py::repr(py::cast(attr.name));
+    ss << ", ";
+    ss << py::repr(py::cast(attr.id));
+    ss << ')';
+    return ss.str();
+}
+
+std::string AttributeStr(model::Attribute const& attr) {
+    std::stringstream ss;
+    ss << py::str(py::cast(attr.name));
+    return ss.str();
+}
+
+std::string FdToStringFull(model::FunctionalDependency const& fd) {
+    std::stringstream ss;
+    ss << "FD on table " << fd.table_name << ": ";
+    ss << "[";
+    for (auto const& [name, id] : fd.lhs) {
+        ss << "(" << name << ", " << id << ") ";
+    }
+    ss.seekp(-1, std::stringstream::cur);
+    ss << "]";
+    ss << " -> ";
+    ss << "[";
+    for (auto const& [name, id] : fd.rhs) {
+        ss << "(" << name << ", " << id << ") ";
+    }
+    ss.seekp(-1, std::stringstream::cur);
+    ss << "]";
+
+    return ss.str();
+}
+
+std::string FdToStringShort(model::FunctionalDependency const& fd) {
+    std::stringstream ss;
+    ss << "[";
+    for (model::Attribute const& attr : fd.lhs) {
+        ss << AttributeStr(attr) << ' ';
+    }
+    ss.seekp(-1, std::stringstream::cur);
+    ss << "]";
+    ss << " -> ";
+    ss << "[";
+    for (model::Attribute const& attr : fd.rhs) {
+        ss << AttributeStr(attr) << ' ';
+    }
+    ss.seekp(-1, std::stringstream::cur);
+    ss << "]";
+    return ss.str();
+}
+
+std::string FdRepr(model::FunctionalDependency const& fd) {
+    std::stringstream ss;
+    ss << kFdClassName << '(';
+    ss << py::repr(py::cast(fd.table_name));
+    ss << ", ";
+    ss << py::repr(py::cast(fd.lhs));
+    ss << ", ";
+    ss << py::repr(py::cast(fd.rhs));
+    ss << ')';
+    return ss.str();
+}
+
+ssize_t FdHash(model::FunctionalDependency const& fd) {
+    return py::hash(py::make_tuple(fd.table_name, fd.lhs, fd.rhs));
+}
+
+py::list FdsToList(algos::FdStorage const& storage) {
+    // The container would be allocated twice if we created it on
+    // core's side: once there, and the other time for the copy.
+    py::list fd_list{storage.GetStripped().size()};
+    Py_ssize_t i = 0;
+    for (model::FunctionalDependency fd : storage) {
+        // If not released, the refcount of the new object will reach 0 after
+        // this line, triggering UB on access.
+        PyList_SET_ITEM(fd_list.ptr(), i, py::cast(std::move(fd)).release().ptr());
+        ++i;
+    }
+    return fd_list;
+}
 }  // namespace
 
 namespace python_bindings {
 void BindFd(py::module_& main_module) {
     using namespace algos;
+    using namespace pybind11::literals;
 
     auto fd_module = main_module.def_submodule("fd");
     py::class_<FD>(fd_module, "FD")
@@ -75,6 +171,79 @@ void BindFd(py::module_& main_module) {
                                                                             schema.get());
                         return FD(lhs, rhs, std::move(schema));
                     }));
+
+    py::class_<model::Attribute>(fd_module, kAttributeClassName)
+            .def_readwrite("name", &model::Attribute::name)
+            .def_readwrite("id", &model::Attribute::id)
+            .def("__repr__", AttributeRepr)
+            .def("__str__", AttributeStr)
+            .def("__hash__", AttributeHash)
+            .def("__iter__",
+                 [](model::Attribute const& attr) {
+                     return py::iter(py::make_tuple(attr.name, attr.id));
+                 })
+            .def(py::self == py::self)
+            .def(py::self != py::self)
+            .def(py::pickle(
+                    [](model::Attribute const& attr) {  // __getstate__
+                        return py::make_tuple(attr.name, attr.id);
+                    },
+                    [](py::tuple t) {  // __setstate__
+                        if (t.size() != 2) {
+                            throw std::runtime_error("Invalid state for " ATTRIBUTE_CLASS_NAME
+                                                     " pickle!");
+                        }
+                        return model::Attribute(t[0].cast<std::string>(),
+                                                t[1].cast<model::Index>());
+                    }))
+            .def(py::init<std::string, model::Index>(), "name"_a, "id"_a)
+            .def(py::init([](std::tuple<std::string, model::Index> t) {
+                     auto& [name, id] = t;
+                     return model::Attribute(std::move(name), id);
+                 }),
+                 "name_id_tuple"_a);
+    py::class_<model::FunctionalDependency>(fd_module, kFdClassName)
+            .def_readwrite("table_name", &model::FunctionalDependency::table_name)
+            .def_readwrite("lhs", &model::FunctionalDependency::lhs)
+            .def_readwrite("rhs", &model::FunctionalDependency::rhs)
+            .def("__repr__", FdRepr)
+            .def("__str__", FdToStringShort)
+            .def("__hash__", FdHash)
+            .def("__iter__",
+                 [](model::FunctionalDependency const& fd) {
+                     return py::iter(py::make_tuple(fd.table_name, fd.lhs, fd.rhs));
+                 })
+            .def(py::self == py::self)
+            .def(py::self != py::self)
+            .def("to_string_short", FdToStringShort)
+            .def("to_string_full", FdToStringFull)
+            .def(py::pickle(
+                    // __getstate__
+                    [](model::FunctionalDependency const& fd) {
+                        return py::make_tuple(py::cast(fd.table_name), py::cast(fd.lhs),
+                                              py::cast(fd.rhs));
+                    },
+                    // __setstate__
+                    [](py::tuple t) {
+                        if (t.size() != 3) {
+                            throw std::runtime_error("Invalid state for " FD_CLASS_NAME " pickle!");
+                        }
+                        return model::FunctionalDependency(
+                                t[0].cast<std::string>(),
+                                t[1].cast<std::vector<model::Attribute>>(),
+                                t[2].cast<std::vector<model::Attribute>>());
+                    }))
+            .def(py::init<std::string, std::vector<model::Attribute>,
+                          std::vector<model::Attribute>>(),
+                 "table_name"_a, "lhs"_a, "rhs"_a);
+    py::class_<algos::FdStorage, FdStoragePtr>(fd_module, "FdStorage")
+            .def("to_fds", FdsToList)
+            .def(
+                    "__iter__",
+                    [](algos::FdStorage const& storage) {
+                        return py::make_iterator(storage.begin(), storage.end());
+                    },
+                    py::keep_alive<0, 1>());
 
     static constexpr auto kPyroName = "Pyro";
     static constexpr auto kTaneName = "Tane";
