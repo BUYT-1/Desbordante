@@ -131,6 +131,29 @@ FdList FdsToList(algos::MultiAttrRhsFdStorage const& storage) {
     return fd_list;
 }
 
+FdList FdsToList(algos::SingleAttrRhsFdStorage const& storage) {
+    // The container would be allocated twice if we created it on
+    // core's side: once there, and the other time for the copy.
+    std::size_t fds_total = 0;
+    for (std::deque<algos::SingleAttrRhsStrippedFd> attr_fds : storage.GetStripped()) {
+        fds_total += attr_fds.size();
+    }
+    FdList fd_list{fds_total};
+    Py_ssize_t fd_index = 0;
+    model::Index rhs_index = 0;
+    for (std::deque<algos::SingleAttrRhsStrippedFd> attr_fds : storage.GetStripped()) {
+        for (algos::SingleAttrRhsStrippedFd stripped_fd : attr_fds) {
+            py::object py_fd = py::cast(stripped_fd.ToFd(storage.GetTableHeader(), rhs_index));
+            // If not released, the refcount of the object will reach 0 after exiting the scope,
+            // triggering UB on access.
+            PyList_SET_ITEM(fd_list.ptr(), fd_index, py_fd.release().ptr());
+            ++fd_index;
+        }
+        ++rhs_index;
+    }
+    return fd_list;
+}
+
 std::deque<algos::MultiAttrRhsStrippedFd> StrippedFdsFromIntPairs(PySelectionPairs int_pairs,
                                                                   std::size_t col_number) {
     std::deque<algos::MultiAttrRhsStrippedFd> stripped_fds;
