@@ -94,6 +94,19 @@ desbordante_add_test(
     Boost::headers
 )
 
+# --- CIND ---
+desbordante_add_test(
+    cind.algorithms
+    SRCS
+    test_cind_algorithms.cpp
+    LIBS
+    Boost::headers
+    ${DESBORDANTE_PREFIX}::model::table
+    ${DESBORDANTE_PREFIX}::testlib::common
+    ${DESBORDANTE_PREFIX}::cind
+    ${DESBORDANTE_PREFIX}::ind
+)
+
 # --- CSV ---
 desbordante_add_test(
     csv.parser
