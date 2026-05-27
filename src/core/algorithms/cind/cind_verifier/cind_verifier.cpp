@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <optional>
 #include <ranges>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -91,18 +92,27 @@ void CINDVerifier::RegisterOptions() {
     model::TableIndex const table_limit = 2;
     RegisterOption(config::kTablesOpt(&input_tables_, table_limit));
 
-    RegisterOption(config::kLhsIndicesOpt(
+    auto const check_uniqueness = [](config::IndicesType const& indices) {
+        std::set<config::IndexType> unique_ids{indices.begin(), indices.end()};
+        if (unique_ids.size() != indices.size()) {
+            throw config::ConfigurationError{"Invalid input: all indices should be unique"};
+        }
+    };
+
+    RegisterOption(config::kLhsRawIndicesOpt(
             &ind_.lhs, [this]() { return input_tables_.front()->GetNumberOfColumns(); },
-            [&rhs = ind_.rhs](config::IndicesType const& indices) {
+            [&rhs = ind_.rhs, check_uniqueness](config::IndicesType const& indices) {
+                check_uniqueness(indices);
                 if (!rhs.empty() && rhs.size() != indices.size()) {
                     throw config::ConfigurationError{
                             "Invalid input: LHS and RHS indices must have the same size"};
                 }
             }));
 
-    RegisterOption(config::kRhsIndicesOpt(
+    RegisterOption(config::kRhsRawIndicesOpt(
             &ind_.rhs, [this]() { return input_tables_.back()->GetNumberOfColumns(); },
-            [&lhs = ind_.lhs](config::IndicesType const& indices) {
+            [&lhs = ind_.lhs, check_uniqueness](config::IndicesType const& indices) {
+                check_uniqueness(indices);
                 if (!lhs.empty() && lhs.size() != indices.size()) {
                     throw config::ConfigurationError{
                             "Invalid input: LHS and RHS indices must have the same size"};
@@ -143,12 +153,6 @@ void CINDVerifier::ResetState() {
 
 void CINDVerifier::LoadDataInternal() {
     encoded_tables_ = std::make_unique<model::EncodedTables>(input_tables_);
-
-    model::TableIndex const lhs_table_idx = 0;
-    auto const& lhs_enc = encoded_tables_->GetTable(lhs_table_idx);
-    if (lhs_enc.GetColumnData().empty() || lhs_enc.GetColumnData().front().GetNumRows() == 0) {
-        throw std::runtime_error("Got an empty LHS table: CIND verification is meaningless.");
-    }
 }
 
 unsigned long long CINDVerifier::ExecuteInternal() {
@@ -163,6 +167,10 @@ void CINDVerifier::VerifyCIND() {
 
     auto const& lhs_enc = encoded_tables_->GetTable(lhs_table_idx);
     auto const& rhs_enc = encoded_tables_->GetTable(rhs_table_idx);
+
+    if (lhs_enc.GetColumnData().empty() || lhs_enc.GetColumnData().front().GetNumRows() == 0) {
+        throw std::runtime_error("Got an empty LHS table: CIND verification is meaningless.");
+    }
 
     bool const same_table = (lhs_table_idx == rhs_table_idx);
 
