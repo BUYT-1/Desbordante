@@ -107,6 +107,19 @@ desbordante_add_test(
     ${DESBORDANTE_PREFIX}::ind
 )
 
+desbordante_add_test(
+    cind.verifier
+    SRCS
+    test_cind_verifier.cpp
+    LIBS
+    Boost::headers
+    ${DESBORDANTE_PREFIX}::model::table
+    ${DESBORDANTE_PREFIX}::testlib::common
+    ${DESBORDANTE_PREFIX}::cind::verifier
+    ${DESBORDANTE_PREFIX}::ind::verifier
+    ${DESBORDANTE_PREFIX}::ind
+)
+
 # --- CSV ---
 desbordante_add_test(
     csv.parser
